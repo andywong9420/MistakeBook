@@ -30,10 +30,24 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Find project root
+        id: root
+        run: |
+          PKG_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" | head -n 1)
+          if [ -z "$PKG_PATH" ]; then
+            echo "package.json not found!"
+            exit 1
+          fi
+          DIR=$(dirname "$PKG_PATH")
+          echo "workdir=$DIR" >> $GITHUB_OUTPUT
+          echo "Found project at: $DIR"
+
       - name: Install dependencies
+        working-directory: ${{ steps.root.outputs.workdir }}
         run: npm install
 
       - name: Build
+        working-directory: ${{ steps.root.outputs.workdir }}
         run: npm run build
 
       - name: Setup Pages
@@ -42,7 +56,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: ${{ steps.root.outputs.workdir }}/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
