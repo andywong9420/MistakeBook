@@ -52,7 +52,11 @@ export default function Login() {
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      setError('Google 登入失敗，請稍後再試。');
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('登入視窗被關閉或被瀏覽器阻擋。若您在預覽畫面中無法登入，請嘗試右上角的「在新分頁開啟」按鈕。');
+      } else {
+        setError('Google 登入失敗，請稍後再試。');
+      }
     } finally {
       setLoading(false);
     }
