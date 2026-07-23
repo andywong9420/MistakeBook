@@ -1,0 +1,79 @@
+<template id="view-teacher">
+  <div class="space-y-6">
+    <div class="flex justify-between items-end">
+      <h2 class="text-2xl font-bold text-slate-800">教學數據儀表板 Dashboard</h2>
+      <button onclick="initTeacherView()" class="text-sm text-blue-600 underline">Refresh</button>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+        <p class="text-slate-500 text-sm font-medium">系統錯題總數 Total Errors</p>
+        <p id="kpi-total" class="text-3xl font-bold text-blue-700 mt-2">--</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-700 mb-3 border-b pb-2">高危課題 Top Topics</h3>
+        <ul id="list-topics" class="space-y-2 text-sm"></ul>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-700 mb-3 border-b pb-2">常見錯誤類型 Top Error Types</h3>
+        <ul id="list-errortypes" class="space-y-2 text-sm"></ul>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <h3 class="font-bold text-slate-700 mb-3 border-b pb-2">近期錯題範例 Recent Mistakes Drill-down</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm whitespace-nowrap">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-2">Student</th>
+              <th class="px-4 py-2">Class</th>
+              <th class="px-4 py-2">Topic</th>
+              <th class="px-4 py-2">Error Type</th>
+              <th class="px-4 py-2">Images</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-table" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  function initTeacherView() {
+    google.script.run.withSuccessHandler(renderDashboard).getTeacherDashboardData();
+    google.script.run.withSuccessHandler(renderDrilldown).getErrorExamples();
+  }
+
+  function renderDashboard(data) {
+    document.getElementById('kpi-total').innerText = data.totalErrors;
+    
+    document.getElementById('list-topics').innerHTML = data.topTopics.map(t => 
+      `<li class="flex justify-between"><span>${t.topic}</span><span class="font-bold text-blue-600">${t.count}</span></li>`
+    ).join('');
+    
+    document.getElementById('list-errortypes').innerHTML = data.topErrorTypes.map(t => 
+      `<li class="flex justify-between"><span>${t.type}</span><span class="font-bold text-red-500">${t.count}</span></li>`
+    ).join('');
+  }
+
+  function renderDrilldown(errors) {
+    const driveUrl = "https://drive.google.com/uc?export=view&id=";
+    document.getElementById('drilldown-table').innerHTML = errors.map(e => `
+      <tr class="hover:bg-slate-50">
+        <td class="px-4 py-3 font-medium">${e.StudentName || e.StudentEmail}</td>
+        <td class="px-4 py-3">${e.Class || '-'}</td>
+        <td class="px-4 py-3">${e.Topic}</td>
+        <td class="px-4 py-3"><span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">${e.ErrorType}</span></td>
+        <td class="px-4 py-3 flex gap-2">
+           <a href="${driveUrl}${e.WrongWorkFileId}" target="_blank" class="text-blue-600 hover:underline">Wrong</a>
+           <a href="${driveUrl}${e.CorrectAnswerFileId}" target="_blank" class="text-green-600 hover:underline">Correct</a>
+        </td>
+      </tr>
+    `).join('');
+  }
+</script>
