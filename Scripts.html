@@ -1,0 +1,56 @@
+<script>
+  let currentUser = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    google.script.run
+      .withSuccessHandler(initApp)
+      .withFailureHandler(showError)
+      .getCurrentUserProfile();
+  });
+
+  function initApp(response) {
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+
+    if (response.status === 'AUTHORIZED') {
+      currentUser = response.user;
+      document.getElementById('userInfo').innerText = `${currentUser.name} (${currentUser.role})`;
+      routeByRole(currentUser.role);
+    } else {
+      loadView('view-unauthorized');
+      document.getElementById('auth-message').innerText = response.message;
+    }
+  }
+
+  function routeByRole(role) {
+    if (role === 'student') {
+      loadView('view-student');
+      initStudentView();
+    } else if (role === 'teacher') {
+      loadView('view-teacher');
+      initTeacherView();
+    } else if (role === 'admin') {
+      loadView('view-admin');
+    }
+  }
+
+  function loadView(templateId) {
+    const content = document.getElementById(templateId).innerHTML;
+    document.getElementById('mainContent').innerHTML = content;
+  }
+
+  function showError(err) {
+    alert('發生錯誤 Error: ' + err);
+    document.getElementById('loader').classList.add('hidden');
+  }
+  
+  // File to Base64 helper
+  function getBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  }
+</script>
