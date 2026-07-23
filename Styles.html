@@ -1,0 +1,14 @@
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Custom tweaks for mobile forms */
+  input[type="text"], input[type="date"], select, textarea {
+    @apply w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 mt-1 block px-3 py-2 border;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-blue-700 transition active:scale-95 w-full md:w-auto;
+  }
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-300 px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-slate-50 transition active:scale-95 w-full md:w-auto;
+  }
+  .hide-view { display: none !important; }
+</style>
