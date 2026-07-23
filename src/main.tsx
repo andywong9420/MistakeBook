@@ -11,6 +11,15 @@ class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean,
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
+  componentDidMount() {
+    window.addEventListener('unhandledrejection', this.handlePromiseRejection);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('unhandledrejection', this.handlePromiseRejection);
+  }
+  handlePromiseRejection = (event: PromiseRejectionEvent) => {
+    this.setState({ hasError: true, error: event.reason instanceof Error ? event.reason : new Error(String(event.reason)) });
+  };
   render() {
     if (this.state.hasError) {
       return (
