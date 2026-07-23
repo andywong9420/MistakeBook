@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { BookOpen } from 'lucide-react';
 
 export default function Login() {
@@ -10,7 +11,14 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const { userData, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && userData) {
+      navigate('/');
+    }
+  }, [userData, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,14 +26,13 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/');
+      // Removed manual navigate to prevent race condition; let useEffect handle it.
     } catch (err: any) {
       console.error(err);
       // Auto-create admin if it's the very first time
       if (email === 'wongph@twghkywc.edu.hk' && (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential')) {
         try {
           await createUserWithEmailAndPassword(auth, email, password);
-          navigate('/');
           return;
         } catch (createErr: any) {
           console.error(createErr);
@@ -49,7 +56,6 @@ export default function Login() {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/');
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/popup-closed-by-user') {

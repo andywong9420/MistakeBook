@@ -31,7 +31,8 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
 };
 
 const RoleBasedRedirect = () => {
-  const { userData } = useAuth();
+  const { userData, loading } = useAuth();
+  if (loading) return <div className="p-8 text-center">載入中...</div>;
   if (!userData) return <Navigate to="/login" />;
   if (userData.role === 'student') return <Navigate to="/student" />;
   if (userData.role === 'teacher') return <Navigate to="/teacher" />;

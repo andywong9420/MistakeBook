@@ -6,6 +6,7 @@ import { db, storage, handleFirestoreError, OperationType } from '../../lib/fire
 import { useAuth } from '../../context/AuthContext';
 import { Mistake, Settings } from '../../types';
 import { Upload, X, Save, Image as ImageIcon } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 
 export default function AddMistake() {
   const { userData } = useAuth();
@@ -49,9 +50,22 @@ export default function AddMistake() {
   }, []);
 
   const uploadImage = async (file: File, path: string): Promise<string> => {
-    const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytesResumable(storageRef, file);
-    return await getDownloadURL(snapshot.ref);
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true
+      };
+      const compressedFile = await imageCompression(file, options);
+      const storageRef = ref(storage, `${path}/${Date.now()}_${compressedFile.name}`);
+      const snapshot = await uploadBytesResumable(storageRef, compressedFile);
+      return await getDownloadURL(snapshot.ref);
+    } catch (error) {
+      console.log('Compression failed, uploading original', error);
+      const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytesResumable(storageRef, file);
+      return await getDownloadURL(snapshot.ref);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
