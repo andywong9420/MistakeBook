@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "teacher", "student"] },
+        "class": { "type": "string", "maxLength": 50 },
+        "mustChangePassword": { "type": "boolean" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["email", "name", "role", "isActive", "createdAt"]
+    },
+    "Mistake": {
+      "title": "Mistake",
+      "description": "A math mistake tracked by a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 100 },
+        "studentClass": { "type": "string", "maxLength": 50 },
+        "subject": { "type": "string", "maxLength": 100 },
+        "topic": { "type": "string", "maxLength": 100 },
+        "errorType": { "type": "string", "maxLength": 100 },
+        "assessmentName": { "type": "string", "maxLength": 200 },
+        "date": { "type": "string", "maxLength": 50 },
+        "questionNumber": { "type": "string", "maxLength": 20 },
+        "reflection": { "type": "string", "maxLength": 1000 },
+        "wrongPhotoUrl": { "type": "string", "maxLength": 1000 },
+        "correctPhotoUrl": { "type": "string", "maxLength": 1000 },
+        "reviewStatus": { "type": "string", "enum": ["needs_review", "mastered"] },
+        "nextReviewDate": { "type": "number" },
+        "reviewStage": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["studentId", "subject", "topic", "errorType", "reviewStatus", "createdAt"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global settings for options",
+      "type": "object",
+      "properties": {
+        "subjects": { "type": "array" },
+        "topics": { "type": "array" },
+        "errorTypes": { "type": "array" },
+        "classes": { "type": "array" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "mistakes/{mistakeId}": {
+      "schema": { "$ref": "#/entities/Mistake" },
+      "description": "Student mistakes"
+    },
+    "settings/global": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "Global app settings"
+    }
+  }
+}

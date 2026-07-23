@@ -62,11 +62,11 @@ function App() {
 
                   {/* Teacher Routes */}
                   <Route path="/teacher" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><TeacherDashboard /></ProtectedRoute>} />
-                  
+
                   {/* Admin Routes */}
                   <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><ManageUsers /></ProtectedRoute>} />
                   <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><ManageSettings /></ProtectedRoute>} />
-                  
+
                   <Route path="/" element={<RoleBasedRedirect />} />
                 </Routes>
               </div>

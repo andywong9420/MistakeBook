@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      let docRef = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(docRef) ? get(docRef).data.role : '';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'wongph@twghkywc.edu.hk' ||
+        getUserRole() == 'admin'
+      );
+    }
+
+    function isTeacher() {
+      return isSignedIn() && (isAdmin() || getUserRole() == 'teacher');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    // ----------------------------------------------------------------------
+    // SETTINGS
+    // ----------------------------------------------------------------------
+    match /settings/global {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ----------------------------------------------------------------------
+    // USERS
+    // ----------------------------------------------------------------------
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'isActive', 'createdAt']) &&
+             data.email is string && data.email.size() <= 200 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.role in ['admin', 'teacher', 'student'] &&
+             data.isActive is bool &&
+             data.createdAt is number &&
+             (data.get('class', '') is string) && 
+             (data.get('mustChangePassword', false) is bool);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isValidId(userId) && (request.auth.uid == userId || isTeacher()));
+      allow list: if isTeacher();
+      allow create: if (isAdmin() && isValidUser(incoming())) || (isSignedIn() && request.auth.token.email == 'wongph@twghkywc.edu.hk' && request.auth.uid == userId);
+      
+      // Allow user to update their own mustChangePassword flag
+      allow update: if (
+        isSignedIn() && isValidId(userId) &&
+        (
+          isAdmin() || 
+          (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['mustChangePassword', 'name']))
+        ) &&
+        isValidUser(incoming())
+      );
+      
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // ----------------------------------------------------------------------
+    // MISTAKES
+    // ----------------------------------------------------------------------
+    function isValidMistake(data) {
+      return data.keys().hasAll(['studentId', 'subject', 'topic', 'errorType', 'reviewStatus', 'createdAt']) &&
+             data.studentId is string && data.studentId.size() <= 128 &&
+             data.subject is string && data.subject.size() <= 100 &&
+             data.topic is string && data.topic.size() <= 100 &&
+             data.errorType is string && data.errorType.size() <= 100 &&
+             data.reviewStatus in ['needs_review', 'mastered'] &&
+             data.createdAt is number &&
+             (data.get('studentName', '') is string) &&
+             (data.get('studentClass', '') is string) &&
+             (data.get('assessmentName', '') is string) &&
+             (data.get('date', '') is string) &&
+             (data.get('questionNumber', '') is string) &&
+             (data.get('reflection', '') is string) &&
+             (data.get('wrongPhotoUrl', '') is string) &&
+             (data.get('correctPhotoUrl', '') is string) &&
+             (data.get('nextReviewDate', 0) is number) &&
+             (data.get('reviewStage', 0) is number);
+    }
+
+    match /mistakes/{mistakeId} {
+      // Student can read their own, Teacher/Admin can read all
+      allow read: if isSignedIn() && (isTeacher() || existing().studentId == request.auth.uid);
+      
+      // Create: Admin can create for anyone, Student can only create for themselves
+      allow create: if isSignedIn() && isValidMistake(incoming()) && 
+                    (isAdmin() || incoming().studentId == request.auth.uid);
+      
+      // Update: Admin can update anything, Student can update their own
+      allow update: if isSignedIn() && isValidId(mistakeId) && isValidMistake(incoming()) &&
+                    (isAdmin() || (existing().studentId == request.auth.uid && incoming().studentId == request.auth.uid));
+                    
+      allow delete: if isSignedIn() && isValidId(mistakeId) && (isAdmin() || existing().studentId == request.auth.uid);
+    }
+  }
+}
