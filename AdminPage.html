@@ -1,0 +1,20 @@
+<template id="view-admin">
+  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-md mx-auto mt-10 text-center">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">系統管理員 System Admin</h2>
+    <p class="text-slate-600 text-sm mb-6">初次設定或更新架構時使用。</p>
+    
+    <div class="space-y-4">
+      <button onclick="runInit()" class="btn-primary w-full">初始化資料表 Initialize Sheets</button>
+      <button onclick="runImport()" class="btn-secondary w-full">匯入學生帳號 Import Students</button>
+    </div>
+  </div>
+</template>
+
+<script>
+  function runInit() {
+    google.script.run.withSuccessHandler(r => alert(r.message)).initializeSystem();
+  }
+  function runImport() {
+    google.script.run.withSuccessHandler(r => alert(r.message)).importStudentsFromSheet();
+  }
+</script>
